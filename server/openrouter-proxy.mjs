@@ -41,7 +41,11 @@ const server = createServer(async (request, response) => {
         model: MODEL,
         messages: buildMessages(payload),
         temperature: 0.25,
-        max_tokens: 700,
+        max_tokens: 2500,
+        reasoning: {
+          effort: 'none',
+          exclude: true,
+        },
       }),
     })
 
@@ -86,28 +90,18 @@ function buildMessages(payload) {
     {
       role: 'system',
       content:
-        'Ты инженер-электрик и AI-помощник в дипломном веб-калькуляторе. Не рассуждай пошагово и не добавляй вступление. Отвечай на русском языке: ровно 3 нумерованных пункта, по 1 короткому предложению в каждом. Без markdown-таблиц и лишних предупреждений.',
+        'Отвечай только финальным текстом на русском языке. Не показывай рассуждения. Формат: ровно 3 нумерованных пункта, каждый пункт - одно короткое предложение.',
     },
     {
       role: 'user',
       content: [
-        'Проанализируй расчет короткого замыкания.',
-        `Напряжение: ${payload.voltage} В`,
-        `Мощность источника: ${payload.sourcePower} кВА`,
-        `Сопротивление линии: ${payload.lineResistance} Ом/км`,
-        `Длина кабеля: ${payload.cableLength} м`,
-        `Эквивалентное сопротивление источника: ${payload.sourceResistance} Ом`,
-        `Сопротивление кабельной линии: ${payload.cableResistance} Ом`,
-        `Суммарное сопротивление: ${payload.totalResistance} Ом`,
-        `Ток короткого замыкания: ${payload.shortCircuitCurrent} А`,
-        `Ударный ток: ${payload.peakCurrent} А`,
-        '',
-        'Ответ строго по плану:',
+        'Объясни расчет тока короткого замыкания.',
+        `U=${payload.voltage} В; Sист=${payload.sourcePower} кВА; Rлинии=${payload.lineResistance} Ом/км; L=${payload.cableLength} м.`,
+        `Zист=${payload.sourceResistance} Ом; Zкаб=${payload.cableResistance} Ом; Zсум=${payload.totalResistance} Ом.`,
+        `Iкз=${payload.shortCircuitCurrent} А; iуд=${payload.peakCurrent} А.`,
         '1. Откуда взялся результат.',
         '2. Какие параметры больше всего повлияли.',
         '3. Почему ток получился большим или маленьким.',
-        '',
-        'Пример стиля: Основной вклад в увеличение тока КЗ внесло низкое сопротивление линии и высокая мощность источника.',
       ].join('\n'),
     },
   ]
