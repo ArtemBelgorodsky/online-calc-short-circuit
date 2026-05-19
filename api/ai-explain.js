@@ -39,9 +39,19 @@ export default async function handler(request, response) {
       })
     }
 
+    const text = extractMessageText(data)
+    if (!text) {
+      return response.status(502).json({
+        error:
+          data?.error?.message ||
+          `OpenRouter ответил без текста. finish_reason: ${data?.choices?.[0]?.finish_reason || 'не указан'}`,
+        model: MODEL,
+      })
+    }
+
     return response.status(200).json({
       model: MODEL,
-      text: data?.choices?.[0]?.message?.content?.trim() || 'Модель не вернула текст.',
+      text,
     })
   } catch (error) {
     return response.status(500).json({
@@ -90,4 +100,25 @@ function parseJson(text) {
   } catch {
     return { error: { message: text } }
   }
+}
+
+function extractMessageText(data) {
+  const content = data?.choices?.[0]?.message?.content
+
+  if (typeof content === 'string') {
+    return content.trim()
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part
+        if (typeof part?.text === 'string') return part.text
+        return ''
+      })
+      .join('')
+      .trim()
+  }
+
+  return ''
 }

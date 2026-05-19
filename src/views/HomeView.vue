@@ -123,6 +123,10 @@ async function requestAiExplanation() {
       throw new Error(data?.error || 'AI-сервис временно недоступен')
     }
 
+    if (!data?.text) {
+      throw new Error('AI-модель ответила без текста. Попробуйте другую free-модель OpenRouter.')
+    }
+
     remoteAiExplanation.value = data.text
   } catch (error) {
     aiError.value =

@@ -55,9 +55,20 @@ const server = createServer(async (request, response) => {
       return
     }
 
+    const text = extractMessageText(data)
+    if (!text) {
+      sendJson(response, 502, {
+        error:
+          data?.error?.message ||
+          `OpenRouter ответил без текста. finish_reason: ${data?.choices?.[0]?.finish_reason || 'не указан'}`,
+        model: MODEL,
+      })
+      return
+    }
+
     sendJson(response, 200, {
       model: MODEL,
-      text: data?.choices?.[0]?.message?.content?.trim() || 'Модель не вернула текст.',
+      text,
     })
   } catch (error) {
     sendJson(response, 500, {
@@ -130,6 +141,27 @@ function parseJson(text) {
   } catch {
     return { error: { message: text } }
   }
+}
+
+function extractMessageText(data) {
+  const content = data?.choices?.[0]?.message?.content
+
+  if (typeof content === 'string') {
+    return content.trim()
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part
+        if (typeof part?.text === 'string') return part.text
+        return ''
+      })
+      .join('')
+      .trim()
+  }
+
+  return ''
 }
 
 function setCorsHeaders(response) {
